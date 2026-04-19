@@ -1,0 +1,143 @@
+---
+title: "Activation Functions: ReLU, Tanh, Sigmoid, Leaky ReLU"
+description: "Empirical comparison of four activation functions on the heart disease task, showing how the choice alone drives test accuracy between 83% and 97%+."
+---
+
+The choice of activation function has a direct and measurable impact on how well a neural network learns. For the heart disease classifier, four activation functions were tested under identical conditions — same architecture, same optimizer, same training length — to isolate the effect of activation on final test accuracy. The results reveal dramatic differences, with the worst choice (Sigmoid in hidden layers) achieving only ~83% accuracy versus the best (Leaky ReLU) at ~97.56%.
+
+## Activation functions tested
+
+<AccordionGroup>
+  <Accordion title="Sigmoid — ~82.93% test accuracy">
+    **How it works:** Sigmoid maps any real number to the range (0, 1) using the formula:
+
+    `σ(x) = 1 / (1 + e^(−x))`
+
+    **Advantages:**
+    - Output is bounded and interpretable as a probability.
+    - Suitable for output layers in binary classification.
+
+    **Disadvantages:**
+    - In hidden layers, Sigmoid causes the **vanishing gradient problem**. As values approach 0 or 1, the gradient of the Sigmoid function approaches zero. During backpropagation, gradients are multiplied layer by layer — tiny gradients compound into near-zero updates deep in the network. Learning effectively stalls.
+    - Computationally more expensive than ReLU.
+
+    **Usage in this model:**
+
+    ```python
+    model = build_model(activation='sigmoid', optimizer='adam')
+    # Test accuracy: ~82.93%
+    ```
+
+    <Warning>
+      Sigmoid should not be used in hidden layers of deep networks. Reserve it exclusively for the output layer of binary classifiers.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Tanh — ~95.12% test accuracy">
+    **How it works:** Tanh (hyperbolic tangent) maps inputs to the range (−1, 1):
+
+    `tanh(x) = (e^x − e^(−x)) / (e^x + e^(−x))`
+
+    **Advantages:**
+    - Zero-centered output helps gradients flow more symmetrically than Sigmoid.
+    - Larger gradient values than Sigmoid near the origin.
+
+    **Disadvantages:**
+    - Still saturates at extreme values (near −1 or 1), causing vanishing gradients in deep networks.
+    - Slower to compute than ReLU.
+
+    **Usage in this model:**
+
+    ```python
+    model = build_model(activation='tanh', optimizer='adam')
+    # Test accuracy: ~95.12%
+    ```
+
+    Tanh outperforms Sigmoid by a significant margin but still falls short of ReLU due to saturation in the tails.
+  </Accordion>
+
+  <Accordion title="ReLU — ~97.07% test accuracy">
+    **How it works:** Rectified Linear Unit passes positive inputs unchanged and zeroes out negatives:
+
+    `ReLU(x) = max(0, x)`
+
+    **Advantages:**
+    - No saturation for positive inputs — gradients flow cleanly through the network.
+    - Computationally cheap.
+    - Enables fast, stable convergence.
+
+    **Disadvantages:**
+    - Neurons can "die": if a neuron's input is consistently negative, it outputs zero and receives no gradient updates, permanently deactivating it. This is the **dying ReLU problem**.
+
+    **Usage in this model:**
+
+    ```python
+    model = build_model(activation='relu', optimizer='adam')
+    # Test accuracy: ~97.07%
+    ```
+
+    ReLU is the default activation in the `build_model` function and was used for the main reported results.
+
+    <Tip>
+      ReLU is the recommended default activation for this architecture. It delivers strong accuracy and is well-suited to tabular binary classification with this network depth.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Leaky ReLU — ~97.56% test accuracy">
+    **How it works:** Leaky ReLU modifies ReLU to allow a small, non-zero gradient for negative inputs:
+
+    `LeakyReLU(x) = x if x > 0, else α·x`
+
+    In this project, `α = 0.1` (negative slope of 10%).
+
+    **Advantages:**
+    - Solves the dying ReLU problem — neurons with negative inputs still receive a small gradient and continue updating.
+    - Retains the benefits of ReLU for positive inputs.
+
+    **Disadvantages:**
+    - Introduces an additional hyperparameter (the negative slope).
+    - Marginal gains over ReLU in many tasks.
+
+    **Usage in this model:**
+
+    Because `LeakyReLU` is a separate Keras layer rather than a string argument, it requires a different construction pattern:
+
+    ```python
+    m_lrelu = keras.Sequential([
+        layers.Input(shape=(13,)),
+        layers.Dense(64), layers.LeakyReLU(0.1), layers.Dropout(0.3),
+        layers.Dense(32), layers.LeakyReLU(0.1), layers.Dropout(0.3),
+        layers.Dense(16), layers.LeakyReLU(0.1),
+        layers.Dense(1, activation='sigmoid')
+    ])
+    # Test accuracy: ~97.56%
+    ```
+
+    Leaky ReLU achieved the highest test accuracy in this comparison, edging out standard ReLU.
+  </Accordion>
+</AccordionGroup>
+
+## Comparison summary
+
+| Activation | Test Accuracy | Key characteristic |
+|---|---|---|
+| Sigmoid | ~83% | Vanishing gradient problem in hidden layers |
+| Tanh | ~95% | Better than Sigmoid, still saturates |
+| ReLU | ~97% | Healthy gradients, fast convergence |
+| Leaky ReLU | ~97%+ | Solves dying ReLU, small negative slope (0.1) |
+
+## The vanishing gradient problem
+
+Both Sigmoid and Tanh suffer from the vanishing gradient problem in deep hidden layers. During backpropagation, gradients are multiplied across layers. When activation functions produce very small gradients (as Sigmoid and Tanh do in their saturated regions), this multiplication causes gradients to shrink exponentially with depth. By the time the gradient reaches the earlier layers, it is nearly zero — those layers barely update, and the network fails to learn meaningful representations.
+
+ReLU avoids this entirely for positive inputs: its gradient is always 1 for any positive activation, which means it does not attenuate during backpropagation.
+
+## The dying ReLU problem
+
+ReLU has its own failure mode. If a neuron receives only negative inputs during training, its output is always zero and its gradient is also zero. With no gradient, the neuron's weights never update. The neuron is effectively "dead" for the rest of training.
+
+Leaky ReLU addresses this by using a small negative slope (`α = 0.1`) instead of hard-zeroing negative inputs. This ensures every neuron always receives a non-zero gradient, regardless of its activation.
+
+<Note>
+  The output layer always uses Sigmoid activation, regardless of what activation is selected for the hidden layers. Sigmoid on the output layer is required for binary classification with Binary Cross-Entropy loss.
+</Note>

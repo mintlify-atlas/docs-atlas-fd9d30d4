@@ -1,0 +1,67 @@
+---
+title: "Heart Disease Classification with Deep Learning: Overview"
+description: "A deep learning binary classifier predicting heart disease presence using the UCI dataset with 1,025 patients, achieving ~97-99% test accuracy."
+---
+
+Heart Disease Classification is a deep learning project that trains and evaluates a binary classification neural network to predict whether a patient has heart disease. Built on the UCI Heart Disease dataset, it treats the problem as a real clinical challenge — one where model accuracy directly corresponds to patient outcomes — and systematically explores how architecture choices affect that accuracy.
+
+<CardGroup cols={2}>
+  <Card title="Dataset overview" icon="database" href="/dataset/overview">
+    Explore the 1,025-patient UCI dataset and its 13 clinical features.
+  </Card>
+  <Card title="Model architecture" icon="brain" href="/model/architecture">
+    Understand the 3-layer neural network design with ReLU activations and Dropout.
+  </Card>
+  <Card title="Experiment results" icon="trophy" href="/experiments/results">
+    See the full comparison across activation functions, optimizers, and learning rates.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Set up your environment and run the notebook in minutes.
+  </Card>
+</CardGroup>
+
+## What this project does
+
+The project takes 13 clinical attributes — including age, sex, chest pain type, resting blood pressure, serum cholesterol, and thalassemia type — and trains a fully connected neural network to output a binary prediction: `1` (heart disease present) or `0` (absent).
+
+Rather than training a single model and reporting its accuracy, the project runs a systematic series of experiments. Each run isolates one variable — activation function, optimizer, learning rate, or batch size — while holding the others constant. This lets you see, in concrete accuracy numbers, how each choice affects the outcome.
+
+The best-performing configuration — **ReLU activations**, **Adam optimizer**, and a **learning rate of 0.001** — achieves approximately **97% test accuracy** on the 1,025-patient dataset.
+
+## Academic context
+
+This project was developed as a mid-term assignment for a Deep Learning course. The goal was to go beyond plugging numbers into a framework and instead understand *why* certain configurations work. Every experiment in the notebook is paired with an explanation of the underlying theory — for example, why sigmoid activations in hidden layers cause vanishing gradients, and how that manifests as lower accuracy in practice.
+
+<Note>
+  The notebook (`heart_disease_classification.ipynb`) is written in Turkish, but all code, variable names, and outputs are universally readable. This documentation serves as the English-language reference for all experiments and results.
+</Note>
+
+## Key achievements
+
+The experiments produced clear, reproducible outcomes that validate standard deep learning guidance:
+
+| Configuration | Test accuracy |
+|---|---|
+| Sigmoid (hidden layers) | ~83% |
+| Tanh (hidden layers) | ~90% |
+| **ReLU (hidden layers)** | **~97%** |
+| Leaky ReLU (hidden layers) | ~97%+ |
+
+- **ReLU** outperformed Sigmoid by 14 percentage points, confirming the theoretical advantage of gradient flow preservation on deep networks.
+- **Adam** converged fastest and most reliably across all optimizer experiments.
+- A **learning rate of 0.001** was the sweet spot — 0.1 caused the model to diverge (~51% accuracy), while 0.0001 converged too slowly.
+- **Dropout regularization** was essential: without it, the model overfit on the modest 1,025-sample dataset.
+
+## Tech stack
+
+| Tool | Version | Role |
+|---|---|---|
+| Python | 3.10+ | Runtime |
+| TensorFlow | 2.x | Deep learning framework |
+| Keras | Bundled with TF | Model API (`layers`, `Sequential`) |
+| scikit-learn | Latest | Train/test split, preprocessing, metrics |
+| pandas | Latest | Data loading and manipulation |
+| numpy | Latest | Numerical operations |
+| matplotlib | Latest | Training curve plots |
+| seaborn | Latest | Correlation heatmaps and distribution plots |
+| Jupyter | Latest | Interactive notebook environment |

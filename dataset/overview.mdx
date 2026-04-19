@@ -1,0 +1,37 @@
+---
+title: "UCI Heart Disease Dataset: Overview and Statistics"
+description: "The UCI Heart Disease dataset contains 1,025 patient records with 13 clinical features, sourced from Kaggle, used for binary heart disease prediction."
+---
+
+The UCI Heart Disease dataset is one of the most widely used benchmarks in clinical machine learning research. Originally published in 1989 by Detrano et al. in the *American Journal of Cardiology*, the dataset contains measurements collected from patients during cardiovascular examinations at four medical institutions. It was chosen for this project because heart disease is among the leading causes of death worldwide, making accurate early prediction both meaningful and practically valuable.
+
+## Dataset properties
+
+| Property | Value |
+|---|---|
+| **Source** | [Kaggle – Heart Disease UCI](https://www.kaggle.com/datasets/ronitf/heart-disease-uci) |
+| **Original publication** | Detrano et al., *American Journal of Cardiology*, 1989 |
+| **Samples** | 1,025 patient records |
+| **Features** | 13 clinical attributes |
+| **Target** | Binary — `1` = heart disease present, `0` = absent |
+| **Class balance** | 526 positive (heart disease), 499 negative |
+| **Missing values** | None |
+
+## Class distribution
+
+The dataset is nearly balanced between the two classes, which is a favourable property for binary classification. An imbalanced dataset would require additional techniques such as oversampling or class-weighted loss; this dataset does not.
+
+<Note>
+  A balanced dataset means the model cannot achieve deceptively high accuracy simply by predicting the majority class. Both classes are represented at roughly 51% / 49%.
+</Note>
+
+## Dataset split
+
+Before training, the dataset is divided into a training set and a held-out test set using an 80/20 stratified split:
+
+| Split | Samples |
+|---|---|
+| **Training set** | 820 (80%) |
+| **Test set** | 205 (20%) |
+
+Stratification on the target column ensures that both splits preserve the original class proportions, preventing accidental imbalance in either set.

@@ -1,0 +1,72 @@
+---
+title: "Preparing the UCI Heart Disease Data for Model Training"
+description: "How the UCI Heart Disease dataset is prepared for training: feature/target split, 80/20 stratified train-test division, and StandardScaler normalization."
+---
+
+Raw tabular data rarely arrives in a form that neural networks can learn from efficiently. Features measured on different scales create an uneven playing field during gradient-based optimization — the network adjusts weights in response to gradient magnitudes, so a feature like cholesterol (126–564) will dominate over a binary feature (0–1) unless the scales are equalized. Preprocessing addresses this and also ensures the evaluation set is representative of the real distribution.
+
+The entire preprocessing pipeline runs in three steps before any model is defined or trained.
+
+<Steps>
+
+<Step title="Feature/target split">
+The raw DataFrame is split into the input matrix `X` (all 13 clinical features) and the label vector `y` (the `target` column). The `.values` call converts each from a pandas object to a plain NumPy array, which is what Keras and scikit-learn expect.
+
+```python
+X = df.drop('target', axis=1).values
+y = df['target'].values
+```
+
+After this step, `X` has shape `(1025, 13)` and `y` has shape `(1025,)`.
+</Step>
+
+<Step title="Train/test split">
+The data is divided into an 80% training set and a 20% test set using scikit-learn's `train_test_split`. Two arguments deserve attention:
+
+- **`random_state=42`** — seeds the shuffle so results are reproducible across runs.
+- **`stratify=y`** — preserves the original class proportions in both splits. Without stratification, random chance could place most positive or negative examples in one split, making the evaluation misleading.
+
+```python
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+```
+
+| Split | Shape |
+|---|---|
+| `X_train` | (820, 13) |
+| `X_test` | (205, 13) |
+</Step>
+
+<Step title="Feature normalization">
+`StandardScaler` transforms each feature to have zero mean and unit variance. It is **fitted on the training set only**, then applied to both sets.
+
+```python
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test  = scaler.transform(X_test)
+```
+
+`fit_transform` computes the per-feature mean and standard deviation from the training data and immediately applies the transformation. `transform` (without `fit`) reuses those same statistics to scale the test data.
+
+<Warning>
+  Do not call `fit_transform` on the test set. Doing so would compute statistics from test data and use them during scaling — a form of data leakage. The test set must be scaled using only the statistics learned from the training set, or the evaluation results will be optimistically biased.
+</Warning>
+
+**Why normalization matters for this dataset:**
+
+Features like `chol` (126–564) and `trestbps` (94–200) have much larger raw values than binary features like `fbs` or `exang` (0–1). Without normalization, the larger-valued features produce larger gradients, causing the network to update their corresponding weights more aggressively while effectively ignoring binary features. StandardScaler eliminates this disparity.
+</Step>
+
+</Steps>
+
+## Final shapes
+
+After preprocessing, the arrays passed to the model are:
+
+| Array | Shape | Description |
+|---|---|---|
+| `X_train` | (820, 13) | Normalized training features |
+| `X_test` | (205, 13) | Normalized test features |
+| `y_train` | (820,) | Training labels |
+| `y_test` | (205,) | Test labels |

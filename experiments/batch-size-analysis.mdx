@@ -1,0 +1,57 @@
+---
+title: "Batch Size Impact on Training Speed and Generalization"
+description: "How batch sizes 16, 32, 64, and 128 affect gradient noise, training speed, and test accuracy in the heart disease classification model."
+---
+
+Batch size controls how many training samples are used to compute each gradient update. It is one of the few hyperparameters that affects both the mechanics of optimization and the final generalization quality of the model. Choosing the right batch size involves a trade-off between training speed and the regularity of the gradient signal.
+
+## Key concepts
+
+**Small batches (8, 16)** produce noisy gradient estimates because each update is computed from only a small, potentially unrepresentative sample of the training data. This noise acts as implicit regularization — it prevents the optimizer from following the gradient too precisely into sharp, narrow minima that do not generalize well. The cost is slower wall-clock training, since more gradient steps are needed per epoch.
+
+**Large batches (64, 128, 256)** produce smoother, more accurate gradient estimates by averaging over more samples. Training is faster per epoch, but the optimizer tends to converge to sharper minima that are more sensitive to small distribution shifts in the test set. This can reduce generalization performance relative to smaller batches, especially on limited datasets.
+
+**batch_size=32** is the default used in this project. It sits at the intersection of the two extremes — enough samples per step for a stable gradient signal, small enough to retain some beneficial gradient noise.
+
+## General guidance
+
+| Batch size | Gradient noise | Speed | Generalization tendency |
+|------------|----------------|-------|-------------------------|
+| 8 | Very noisy | Slow | Better regularization |
+| 16 | Noisy | Moderate | Good regularization |
+| **32** | Balanced | Good | **Recommended default** |
+| 64 | Smooth | Fast | May overfit more |
+| 128+ | Very smooth | Very fast | Risk of sharp minima |
+
+## Results from this project
+
+Four batch sizes were tested with the best configuration (ReLU, Adam, lr=0.001, 100 epochs):
+
+- **batch_size=16**: 98.54% test accuracy
+- **batch_size=32**: 97.07% test accuracy
+- **batch_size=64**: 94.15% test accuracy
+- **batch_size=128**: 90.73% test accuracy
+
+The trend is consistent with theory: smaller batches generalize better on this dataset, and accuracy decreases as batch size increases.
+
+## Training with batch_size=32
+
+```python
+history = model.fit(
+    X_train, y_train,
+    epochs=100,
+    batch_size=32,       # 820 samples / 32 = ~26 steps per epoch
+    validation_split=0.2,
+    verbose=1
+)
+```
+
+With 1,025 total samples and an 80/20 train-validation split, the training set contains approximately 820 samples. At batch_size=32, each epoch consists of roughly 26 gradient update steps.
+
+<Note>
+On a small dataset like this (820 training samples), batch_size=32 results in only ~26 steps per epoch. The model sees every training sample once per epoch, and the effective number of gradient updates over 100 epochs is around 2,600. This is a relatively low update count compared to larger datasets, which is another reason smaller batch sizes help here — they extract more signal per epoch by introducing more update steps.
+</Note>
+
+<Tip>
+If training is unstable (loss oscillates or fails to decrease), try reducing the batch size to 16 — smaller batches can smooth out optimization on difficult loss surfaces. If training is too slow and you have the GPU memory, increase the batch size to 64, but monitor validation accuracy closely for signs of reduced generalization.
+</Tip>

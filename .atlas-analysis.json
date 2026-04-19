@@ -1,0 +1,63 @@
+{
+  "projectType": "ai-ml",
+  "projectName": "Heart Disease Classification",
+  "projectDescription": "A deep learning binary classification project that predicts heart disease presence using the UCI Heart Disease dataset, exploring neural network architectures, activation functions, optimizers, and hyperparameters.",
+  "theme": "almond",
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Dataset & Preprocessing",
+        "pages": [
+          "dataset/overview",
+          "dataset/features",
+          "dataset/preprocessing"
+        ]
+      },
+      {
+        "group": "Model Architecture",
+        "pages": [
+          "model/architecture",
+          "model/activation-functions",
+          "model/regularization"
+        ]
+      },
+      {
+        "group": "Experiments & Results",
+        "pages": [
+          "experiments/optimizer-comparison",
+          "experiments/learning-rate-analysis",
+          "experiments/batch-size-analysis",
+          "experiments/results"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Binary classification neural network for heart disease prediction",
+    "Systematic comparison of activation functions (ReLU, Tanh, Sigmoid, Leaky ReLU)",
+    "Optimizer benchmarking (Adam, SGD, RMSProp, Adagrad)",
+    "Learning rate sensitivity analysis (0.1 to 0.0001)",
+    "Batch size impact study on generalization",
+    "Dropout regularization to prevent overfitting on small dataset",
+    "~97-99% test accuracy using optimal ReLU + Adam + lr=0.001 configuration",
+    "Uses UCI Heart Disease dataset with 1,025 patient records and 13 clinical features"
+  ],
+  "publicApiSurface": [
+    "build_model(activation, optimizer, dropout_rate) — constructs and compiles the Keras Sequential model",
+    "build_shallow_model() — 1 hidden layer baseline architecture",
+    "build_deep_model() — 5 hidden layer deep architecture for comparison",
+    "plot_history(history, title) — plots training/validation loss and accuracy curves",
+    "heart.csv — UCI Heart Disease dataset with 1,025 samples and 13 clinical features",
+    "StandardScaler — feature normalization applied before training"
+  ]
+}

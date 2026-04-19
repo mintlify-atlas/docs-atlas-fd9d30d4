@@ -1,0 +1,72 @@
+---
+title: "Optimizer Comparison: Adam, SGD, RMSProp, and Adagrad"
+description: "Four optimizers benchmarked on the same heart disease classification architecture — ReLU, 100 epochs, batch size 32 — to find the best convergence strategy."
+---
+
+The same model architecture was trained four times — once with each optimizer — to understand how the optimization algorithm affects convergence speed and final accuracy. The architecture, activation function, number of epochs, and batch size were held constant. Each optimizer was configured with a representative learning rate: Adam at 0.001, SGD at 0.01 with momentum 0.9, RMSProp at 0.001, and Adagrad at 0.01. This comparison reveals how much the optimizer choice shifts model performance on a small tabular dataset.
+
+## What each optimizer does
+
+### SGD (Stochastic Gradient Descent)
+
+SGD is the baseline optimizer. At each step, it updates weights by subtracting a fraction of the gradient:
+
+```
+weight = weight - learning_rate × gradient
+```
+
+It is simple and interpretable, but it applies a single global learning rate to all parameters. This makes it sensitive to the choice of learning rate and can cause slow or erratic convergence when the loss surface has regions of very different curvature.
+
+### RMSProp
+
+RMSProp maintains a running average of the squared gradient for each parameter and divides the current gradient by this average before applying the update. This produces adaptive, per-parameter learning rates — parameters that receive frequent large gradients get a smaller effective rate, while parameters with small or infrequent gradients get a larger one. This makes it well suited to non-stationary objectives and recurrent architectures.
+
+### Adagrad
+
+Adagrad also adapts learning rates per parameter, but it accumulates all past squared gradients rather than using a running average. This means the effective learning rate decays monotonically over time. For parameters updated frequently, the rate can drop to near zero well before training is complete, which caused it to underperform on this dataset.
+
+### Adam
+
+Adam combines momentum (from SGD) with adaptive per-parameter learning rates (from RMSProp). It maintains both a first moment estimate (the mean gradient) and a second moment estimate (the uncentered variance), and applies bias corrections to both. In practice, Adam converges faster and more reliably than the other three optimizers on most tasks — and this project was no exception.
+
+## Results
+
+| Optimizer | Characteristic | Test accuracy |
+|-----------|----------------|---------------|
+| SGD | Baseline; sensitive to learning rate | 97.56% |
+| RMSProp | Adaptive per-parameter rates | 97.07% |
+| Adagrad | Decays LR for frequently updated params | 89.76% |
+| Adam | Combines momentum + RMSProp adaptivity | **98.54%** |
+
+## Instantiating each optimizer in Keras
+
+The notebook configures each optimizer with a representative learning rate for that algorithm:
+
+```python
+import keras
+
+optimizers = {
+    'adam':    keras.optimizers.Adam(learning_rate=0.001),
+    'sgd':     keras.optimizers.SGD(learning_rate=0.01, momentum=0.9),
+    'rmsprop': keras.optimizers.RMSprop(learning_rate=0.001),
+    'adagrad': keras.optimizers.Adagrad(learning_rate=0.01),
+}
+
+results = {}
+for name, opt in optimizers.items():
+    m = build_model(activation='relu', optimizer=opt)
+    h = m.fit(X_train, y_train, epochs=100, batch_size=32,
+              validation_split=0.2, verbose=0)
+    y_pred = (m.predict(X_test) > 0.5).astype(int).flatten()
+    results[name] = accuracy_score(y_test, y_pred)
+```
+
+Each model shares the same architecture: three hidden layers (64→32→16 neurons), ReLU activations, Dropout(0.3), and a Sigmoid output unit with Binary Cross-Entropy loss.
+
+<Tip>
+Start with Adam as your default optimizer. It is the de-facto standard for feedforward networks on tabular data and requires minimal tuning. Only consider SGD or RMSProp if you have a specific reason — for example, if Adam is overfitting or if you are reproducing a published result.
+</Tip>
+
+<Note>
+Adagrad underperformed here because its aggressive, irreversible learning rate decay is a poor fit for longer training runs. After enough steps, the accumulated squared gradients become so large that the effective learning rate collapses to near zero, and the model stops learning before it has converged. RMSProp was designed specifically to fix this problem by replacing the cumulative sum with a decaying average.
+</Note>

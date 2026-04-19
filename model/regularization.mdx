@@ -1,0 +1,62 @@
+---
+title: "Preventing Overfitting with Dropout Regularization"
+description: "How Dropout(0.3) after the first two hidden layers prevents the model from memorizing 820 training samples instead of learning general patterns."
+---
+
+Regularization is not optional on small datasets — it is essential. The heart disease dataset contains only 1,025 samples, of which roughly 820 are used for training (after an 80/20 train-test split). A neural network with 3,521 parameters has more than enough capacity to memorize those 820 examples rather than learning generalizable patterns. Dropout is the primary mechanism used in this model to prevent that from happening.
+
+## What dropout does
+
+During training, dropout randomly sets a fraction of neuron activations to zero at each forward pass. This has two important effects:
+
+1. **Prevents co-adaptation:** Neurons cannot rely on specific other neurons always being present. They must learn more robust, independent representations.
+2. **Ensemble effect:** Each training step effectively trains a slightly different subnetwork. The final model behaves like an ensemble of many smaller networks, which generalizes better.
+
+At inference time, dropout is disabled. All neurons are active, but their outputs are scaled down by the dropout rate to compensate for the larger number of active units.
+
+<Note>
+  Dropout is only active during training. During evaluation and inference, all neurons contribute to the output, and their weights are scaled accordingly by Keras automatically.
+</Note>
+
+## Where dropout is applied
+
+In the main model, dropout is placed after the first two hidden layers only — not after the third hidden layer or the output layer:
+
+```python
+layers.Dense(64, activation='relu'),
+layers.Dropout(0.3),   # 30% dropout
+layers.Dense(32, activation='relu'),
+layers.Dropout(0.3),   # 30% dropout
+layers.Dense(16, activation='relu'),  # No dropout here
+layers.Dense(1, activation='sigmoid')
+```
+
+The `dropout_rate=0.3` means 30% of neurons in the affected layers are randomly zeroed out on each training step.
+
+The third hidden layer (16 neurons) does not receive dropout because it is already small — applying dropout here would discard too large a fraction of the limited representations it learns. The output layer never receives dropout, as it needs stable predictions.
+
+## Why dropout is essential on this dataset
+
+With only 820 training samples and 3,521 parameters, the model can easily memorize rather than generalize:
+
+- **Without dropout:** Training accuracy climbs toward 100% while validation accuracy plateaus or declines. The training and validation loss curves diverge — a clear sign of overfitting.
+- **With dropout:** Both training and validation accuracy increase together, and their loss curves remain close throughout training. The model is forced to learn patterns robust enough to survive random neuron dropout.
+
+The project's training logs confirm this behavior: the model achieves ~97% test accuracy with dropout in place, consistent with its validation accuracy during training.
+
+<Warning>
+  Removing dropout from this model on a 1,025-sample dataset will cause overfitting. Training accuracy will appear very high, but test accuracy will drop as the model memorizes training examples instead of learning general patterns.
+</Warning>
+
+## Dropout rate choice
+
+A dropout rate of 0.3 (30%) was used throughout. Common rates range from 0.2 to 0.5:
+
+- **Too low (e.g., 0.1):** Insufficient regularization; limited impact on overfitting.
+- **Too high (e.g., 0.5):** Excessive noise; the model struggles to learn useful representations and may underfit.
+
+For this architecture and dataset size, 0.3 provides effective regularization without destabilizing training.
+
+<Tip>
+  The `batch_size=32` used during training also provides implicit regularization through stochastic gradient estimates. Smaller batches introduce noise into gradient updates that can help the optimizer escape sharp local minima, contributing to better generalization alongside dropout.
+</Tip>

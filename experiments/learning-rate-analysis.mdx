@@ -1,0 +1,52 @@
+---
+title: "Learning Rate Analysis: Finding the Optimal Training Speed"
+description: "Tested learning rates 0.1, 0.01, 0.001, and 0.0001 with Adam optimizer on the heart disease model — showing divergence, luck, stability, and slow convergence."
+---
+
+Learning rate is the most sensitive hyperparameter in gradient-based training. It controls how large each weight update is. Set it too high, and the optimizer overshoots the loss minimum — the model diverges or oscillates instead of converging. Set it too low, and the model makes negligible progress per step, requiring far more epochs to reach a useful solution. Getting this value right is often the difference between a working model and one that fails entirely.
+
+## Test results
+
+Four learning rates were evaluated with the Adam optimizer, ReLU activations, 100 epochs, and batch size 32.
+
+| Learning rate | Test accuracy | Notes |
+|---------------|---------------|-------|
+| 0.1 | ~51.22% | Diverged — too large |
+| 0.01 | 100.00% | Possible overfitting or statistical luck on small test set |
+| **0.001** | **98.54%** | **Recommended — best generalization** |
+| 0.0001 | 83.41% | Slow convergence — too small for 100 epochs |
+
+## How to set the learning rate with Adam
+
+```python
+import tensorflow as tf
+
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+
+model = build_model(activation='relu', optimizer=optimizer)
+model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.2)
+```
+
+Passing an instantiated optimizer object instead of a string lets you override the default learning rate explicitly.
+
+## Why 0.001 is the sweet spot
+
+<AccordionGroup>
+  <Accordion title="Large enough for meaningful progress">
+    At 0.001, each gradient step moves the weights a distance that is visible in the loss curve. Training converges in roughly 100 epochs without requiring early stopping or learning rate schedules.
+  </Accordion>
+  <Accordion title="Small enough to avoid overshooting">
+    The loss landscape near the minimum is curved. A large step can jump over the minimum and land on the opposite slope, causing the loss to increase rather than decrease. At 0.001, updates are small enough to settle into the minimum rather than bounce around it.
+  </Accordion>
+  <Accordion title="Consistent with established defaults">
+    The Adam paper (Kingma & Ba, 2014) recommends a default learning rate of 0.001. This value has been validated across thousands of real-world tasks and remains the most widely-used starting point in deep learning practice.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+A learning rate of 0.1 caused complete divergence in this setup. The model achieved roughly 51% accuracy — near random chance — because the weight updates were so large that training never stabilized. If you observe loss values that fluctuate wildly or fail to decrease from the first epoch, an excessively high learning rate is the most likely cause.
+</Warning>
+
+<Tip>
+Adam's default learning rate of 0.001 is a well-tested starting point for most deep learning problems. Begin there before tuning. If validation loss plateaus early, try 0.0003 or 0.0001. If training is very slow with no sign of overfitting, you can cautiously try 0.003.
+</Tip>

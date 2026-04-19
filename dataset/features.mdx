@@ -1,0 +1,42 @@
+---
+title: "UCI Heart Disease Dataset: All 13 Clinical Features"
+description: "Complete reference for all 13 clinical attributes in the UCI Heart Disease dataset — types, value ranges, and medical meaning for each feature."
+---
+
+The dataset contains 13 clinical attributes collected during patient examinations, covering demographics, blood measurements, and cardiac test results. Each attribute represents a real measurement or observation recorded during a clinical visit. Understanding what each feature measures and its range of values is essential context for interpreting the model's behaviour.
+
+## Feature reference
+
+| Feature | Full name | Type | Description |
+|---|---|---|---|
+| `age` | Patient age | Integer | Age in years. Range: 29–77. |
+| `sex` | Sex | Binary | `0` = female, `1` = male |
+| `cp` | Chest pain type | Categorical | `0` = typical angina, `1` = atypical angina, `2` = non-anginal pain, `3` = asymptomatic |
+| `trestbps` | Resting blood pressure | Integer | Measured in mmHg on admission. Range: 94–200. |
+| `chol` | Serum cholesterol | Integer | Measured in mg/dl. Range: 126–564. |
+| `fbs` | Fasting blood sugar | Binary | `1` = fasting blood sugar > 120 mg/dl, `0` = otherwise |
+| `restecg` | Resting ECG results | Categorical | `0` = normal, `1` = ST-T wave abnormality, `2` = left ventricular hypertrophy |
+| `thalach` | Maximum heart rate achieved | Integer | Highest heart rate recorded during exercise. Range: 71–202. |
+| `exang` | Exercise-induced angina | Binary | `1` = yes, `0` = no |
+| `oldpeak` | ST depression | Float | ST depression induced by exercise relative to rest. Range: 0.0–6.2. |
+| `slope` | Slope of peak exercise ST segment | Categorical | `0` = downsloping, `1` = flat, `2` = upsloping |
+| `ca` | Major vessels coloured by fluoroscopy | Integer | Number of major vessels (0–4). |
+| `thal` | Thalassemia | Categorical | `0` = normal, `1` = fixed defect, `2` = reversible defect, `3` = reversible defect |
+| `target` | Heart disease diagnosis | Binary | `0` = absent, `1` = present |
+
+## Descriptive statistics
+
+The table below shows summary statistics computed directly from the dataset using `df.describe()`.
+
+| Feature | Min | Mean | Max |
+|---|---|---|---|
+| `age` | 29 | 54.4 | 77 |
+| `trestbps` | 94 | 131.6 | 200 |
+| `chol` | 126 | 246.0 | 564 |
+| `thalach` | 71 | 149.1 | 202 |
+| `oldpeak` | 0.0 | 1.07 | 6.2 |
+| `ca` | 0 | 0.75 | 4 |
+
+<Note>
+  Numerical features span very different scales — for example, `chol` ranges from 126 to 564 while `fbs` is binary (0 or 1). This difference in magnitude would cause larger-valued features to dominate distance-based or gradient-based computations. StandardScaler normalization is applied during preprocessing to bring all features to the same scale before training.
+</Note>

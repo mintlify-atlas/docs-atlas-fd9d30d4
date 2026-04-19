@@ -1,0 +1,94 @@
+---
+title: "Heart Disease Classifier: Best Configuration and Results"
+description: "Final test set evaluation (99.02% accuracy, F1=0.99) and summary of all experiments — activation, optimizer, learning rate, and batch size results."
+---
+
+After systematically exploring activation functions, optimizers, learning rates, and batch sizes, a single best configuration emerged. This page summarizes all experimental findings and presents the final evaluation on the held-out test set.
+
+## Best configuration
+
+| Setting | Value |
+|---------|-------|
+| Activation | ReLU (hidden layers) + Sigmoid (output) |
+| Optimizer | Adam |
+| Learning rate | 0.001 |
+| Batch size | 32 |
+| Epochs | 100 |
+| Dropout rate | 0.3 |
+| Loss function | Binary Cross-Entropy |
+| Test accuracy | ~99.02% |
+
+## Test set performance
+
+The final model was evaluated on a held-out test set of 205 samples (100 no disease, 105 disease).
+
+| Metric | No disease (0) | Disease (1) | Overall |
+|--------|---------------|-------------|---------|
+| Precision | 1.00 | 0.98 | — |
+| Recall | 0.98 | 1.00 | — |
+| F1-score | 0.99 | 0.99 | — |
+| Weighted avg F1 | — | — | **0.99** |
+| **Test accuracy** | — | — | **99.02%** |
+
+The model correctly classified 203 out of 205 test samples. Two samples were misclassified: both were patients with heart disease predicted as healthy (false negatives), hence recall for class 1 is perfect while precision for class 0 is perfect.
+
+## Evaluation code
+
+```python
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+
+y_pred_prob = model.predict(X_test)
+y_pred = (y_pred_prob > 0.5).astype(int).flatten()
+
+print(f'Test Accuracy: {accuracy_score(y_test, y_pred):.4f}')
+print(classification_report(y_test, y_pred, target_names=['No Disease (0)', 'Disease (1)']))
+```
+
+## Architecture comparison
+
+Three different network depths were explored during the architecture search.
+
+| Architecture | Hidden layers | Test accuracy |
+|--------------|---------------|---------------|
+| Shallow | 1 (64 neurons) | Lower |
+| **Main model** | **3 (64→32→16)** | **~97–99%** |
+| Deep | 5 (128→64→32→16→8) | Competitive but more complex |
+
+The 3-layer pyramid (64→32→16) achieved the best balance between model capacity and the amount of available training data. The shallow model lacked capacity to fit the decision boundary, while the 5-layer model offered no meaningful accuracy gain and introduced unnecessary parameters for a 13-feature tabular dataset.
+
+## Key takeaways
+
+- **ReLU decisively outperformed Sigmoid** in hidden layers (97% vs. 83%), validating gradient flow theory in practice. The vanishing gradient problem is not just a textbook concern — it visibly degraded accuracy on this dataset.
+- **Adam converged fastest and most reliably** across all optimizer experiments, achieving 98.54% test accuracy versus 97.56% for SGD and 89.76% for Adagrad.
+- **Learning rate 0.001 proved the sweet spot** — 0.1 caused complete divergence (~51% accuracy); 0.0001 was too slow to converge fully in 100 epochs.
+- **Dropout was essential**: without regularization, the model overfit on the 1,025-sample dataset, where the gap between training and validation loss widened steadily over epochs.
+- **The 3-layer architecture (64→32→16)** struck the right balance between capacity and generalization. Deeper models did not improve results meaningfully given the small dataset size.
+
+<Note>
+Results may vary slightly between runs due to random weight initialization. To reproduce the exact figures shown here, set the random seed before training:
+
+```python
+import tensorflow as tf
+import numpy as np
+
+tf.random.set_seed(42)
+np.random.seed(42)
+```
+</Note>
+
+## Explore related pages
+
+<CardGroup cols={2}>
+  <Card title="Model architecture" icon="layer-group" href="/model/architecture">
+    Layer structure, neuron counts, and dropout placement for the main model.
+  </Card>
+  <Card title="Activation functions" icon="wave-square" href="/model/activation-functions">
+    ReLU, Sigmoid, Tanh, and Leaky ReLU compared on this dataset.
+  </Card>
+  <Card title="Optimizer comparison" icon="sliders" href="/experiments/optimizer-comparison">
+    Adam, SGD, RMSProp, and Adagrad benchmarked head-to-head.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Run the notebook and reproduce all results from scratch.
+  </Card>
+</CardGroup>
